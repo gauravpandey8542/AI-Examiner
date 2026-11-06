@@ -26,3 +26,8 @@ def search(query: str, k: int = 4, doc_id: str | None = None) -> list[dict]:
         hits.append({"text": text, "page": meta["page"],
                      "doc_id": meta["doc_id"], "distance": dist})
     return hits
+def count_chunks(doc_id: str) -> int:
+    return len(_collection.get(where={"doc_id": doc_id})["ids"])
+
+def delete_document(doc_id: str) -> None:
+    _collection.delete(where={"doc_id": doc_id})

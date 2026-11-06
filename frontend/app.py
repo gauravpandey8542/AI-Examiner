@@ -26,7 +26,13 @@ with st.sidebar:
             info = resp.json()
             st.session_state.doc_id = info["doc_id"]
             st.session_state.history = []
-            st.success(f"Indexed {info['pages']} pages, {info['chunks']} chunks")
+            if info.get("status") == "already_ingested":
+                st.info(
+                    f"This document was already indexed ({info['chunks']} chunks). "
+                    "Ready for questions."
+                )
+            else:
+                st.success(f"Indexed {info['pages']} pages, {info['chunks']} chunks")
         else:
             st.error(resp.text)
 

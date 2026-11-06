@@ -1,10 +1,9 @@
 import os
-import shutil
-import uuid
+import hashlib
 from fastapi import FastAPI, UploadFile, File
 from app.ingestion.loader import load_pdf
 from app.ingestion.chunker import chunk_pages
-from app.ingestion.store import add_chunks, search
+from app.ingestion.store import add_chunks, search, count_chunks
 from app.schemas import AskRequest
 from app.rag.answers import answer_question
 
@@ -14,17 +13,25 @@ app = FastAPI(title="RAG Q&A Project")
 def health():
     return {"status": "ok"}
 @app.post("/documents")
-def documents(file: UploadFile = File(...)):
-    doc_id = uuid.uuid4().hex[:8]
+def upload_document(file: UploadFile = File(...)):
+    content = file.file.read()
+    doc_id = hashlib.sha256(content).hexdigest()[:12]
+
+    existing = count_chunks(doc_id)
+    if existing > 0:
+        return {"doc_id": doc_id, "status": "already_ingested",
+                "pages": None, "chunks": existing}
+
     os.makedirs("data", exist_ok=True)
     path = f"data/{doc_id}.pdf"
     with open(path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        f.write(content)
 
     pages = load_pdf(path)
     chunks = chunk_pages(pages, doc_id)
     add_chunks(chunks)
-    return {"doc_id": doc_id, "pages": len(pages), "chunks": len(chunks)}
+    return {"doc_id": doc_id, "status": "ingested",
+            "pages": len(pages), "chunks": len(chunks)}
 
 
 @app.get("/search")
