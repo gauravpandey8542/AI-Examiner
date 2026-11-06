@@ -8,7 +8,7 @@ from app.ingestion.store import add_chunks, search
 from app.schemas import AskRequest
 from app.rag.answers import answer_question
 
-app = FastAPI(title="AI Examiner")
+app = FastAPI(title="RAG Q&A Project")
 
 @app.get("/health")
 def health():
