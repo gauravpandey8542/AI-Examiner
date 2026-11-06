@@ -5,6 +5,9 @@ from fastapi import FastAPI, UploadFile, File
 from app.ingestion.loader import load_pdf
 from app.ingestion.chunker import chunk_pages
 from app.ingestion.store import add_chunks, search
+from app.schemas import AskRequest
+from app.rag.answers import answer_question
+
 app = FastAPI(title="AI Examiner")
 
 @app.get("/health")
@@ -27,3 +30,6 @@ def documents(file: UploadFile = File(...)):
 @app.get("/search")
 def search_documents(q: str, k: int = 4, doc_id: str | None = None):
     return search(q, k, doc_id)
+@app.post("/ask")
+def ask(req: AskRequest):
+    return answer_question(req.question, req.doc_id)
